@@ -9,6 +9,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentSlideSpan = document.querySelector('.current-slide');
     const totalSlidesSpan = document.querySelector('.total-slides');
     
+    // Elementos do contador
+    const daysElement = document.getElementById('days');
+    const hoursElement = document.getElementById('hours');
+    const minutesElement = document.getElementById('minutes');
+    const secondsElement = document.getElementById('seconds');
+    
+    // Data de início do relacionamento: 10/06/2025 às 19h
+    const startDate = new Date('2025-06-10T19:00:00');
+    let counterInterval;
+    
     // Variáveis de controle
     let currentSlide = 0;
     const totalSlides = slides.length;
@@ -40,6 +50,84 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Função para atualizar o contador de tempo
+    function updateCounter() {
+        const now = new Date();
+        const timeDifference = now - startDate;
+        
+        if (timeDifference < 0) {
+            // Se a data ainda não chegou, mostrar zeros
+            daysElement.textContent = '0';
+            hoursElement.textContent = '0';
+            minutesElement.textContent = '0';
+            secondsElement.textContent = '0';
+            return;
+        }
+        
+        const days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
+        
+        // Atualizar os elementos com animação suave
+        animateNumberChange(daysElement, days);
+        animateNumberChange(hoursElement, hours);
+        animateNumberChange(minutesElement, minutes);
+        animateNumberChange(secondsElement, seconds);
+    }
+    
+    // Função para animar mudanças nos números
+    function animateNumberChange(element, newValue) {
+        const currentValue = parseInt(element.textContent) || 0;
+        if (currentValue !== newValue) {
+            element.style.transform = 'scale(1.1)';
+            element.style.transition = 'transform 0.2s ease';
+            
+            setTimeout(() => {
+                element.textContent = newValue.toString().padStart(2, '0');
+                element.style.transform = 'scale(1)';
+            }, 100);
+        }
+    }
+    
+    // Função para iniciar o contador
+    function startCounter() {
+        updateCounter(); // Atualização inicial
+        counterInterval = setInterval(updateCounter, 1000); // Atualizar a cada segundo
+    }
+    
+    // Função para parar o contador
+    function stopCounter() {
+        if (counterInterval) {
+            clearInterval(counterInterval);
+            counterInterval = null;
+        }
+    }
+    
+    // Função para criar corações flutuantes no contador
+    function createCounterHearts() {
+        const heartsContainer = document.querySelector('.floating-hearts-counter');
+        if (!heartsContainer) return;
+        
+        // Limpar corações existentes
+        heartsContainer.innerHTML = '';
+        
+        for (let i = 0; i < 15; i++) {
+            const heart = document.createElement('div');
+            heart.innerHTML = '♥';
+            heart.style.position = 'absolute';
+            heart.style.fontSize = Math.random() * 12 + 8 + 'px';
+            heart.style.color = `rgba(255, 105, 180, ${Math.random() * 0.3 + 0.1})`;
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.top = Math.random() * 100 + '%';
+            heart.style.animation = `gentleFloat ${Math.random() * 4 + 4}s ease-in-out infinite`;
+            heart.style.animationDelay = Math.random() * 4 + 's';
+            heart.style.pointerEvents = 'none';
+            
+            heartsContainer.appendChild(heart);
+        }
+    }
+    
     // Função para iniciar a apresentação
     function startPresentation() {
         if (isAnimating) return;
@@ -64,6 +152,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isAnimating) return;
         isAnimating = true;
         
+        // Parar o contador se estiver rodando
+        stopCounter();
+        
         // Remover classe active de todos os slides
         slides.forEach((slide, i) => {
             slide.classList.remove('active', 'prev');
@@ -81,6 +172,15 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSlide = index;
             updateSlideIndicator();
             updateNavigationButtons();
+            
+            // Verificar se é a tela do contador (slide 9, índice 8)
+            if (index === 8) {
+                // Iniciar o contador e criar corações
+                startCounter();
+                setTimeout(() => {
+                    createCounterHearts();
+                }, 500);
+            }
             
             // Adicionar efeito de entrada nos elementos do slide
             animateSlideContent(slides[index]);
